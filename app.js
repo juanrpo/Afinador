@@ -3,6 +3,15 @@
 // ==================================================
 
 //CLAVIJERO
+let notas = {
+  "E2":82.41,
+  "A2":110.00,
+  "D3":146.83,
+  "G3":196.00,
+  "B3":246.94,
+  "E4":329.63
+}
+
 const guitarra = document.createElement("div")
 guitarra.classList.add("guitarra");
 document.body.appendChild(guitarra);
@@ -51,16 +60,44 @@ btn_E4.textContent = "E4";
 //DATOS
 let etiqueta_Hz = document.createElement("label")
 etiqueta_Hz.classList.add("label")
-etiqueta_Hz.innerHTML = "Hz"
+etiqueta_Hz.innerHTML = "Hz Objetivo"
 document.body.appendChild(etiqueta_Hz);
 
-btn_E2.addEventListener("click", () => reproducirNota(82.41));
-btn_A2.addEventListener("click", () => reproducirNota(110.00));
-btn_D3.addEventListener("click", () => reproducirNota(146.83));
-btn_G3.addEventListener("click", () => reproducirNota(196.00));
-btn_B3.addEventListener("click", () => reproducirNota(246.94));
-btn_E4.addEventListener("click", () => reproducirNota(329.63));
+btn_E2.addEventListener("click", (e) => {
+  reproducirNota(notas["E2"]);
+  funcionBotonPresionado(e);
+});
 
+btn_A2.addEventListener("click", (e) => {
+  reproducirNota(notas["A2"]);
+  funcionBotonPresionado(e);
+});
+
+btn_D3.addEventListener("click", (e) => {
+  reproducirNota(notas["D3"]);
+  funcionBotonPresionado(e);
+});
+
+btn_G3.addEventListener("click", (e) => {
+  reproducirNota(notas["G3"]);
+  funcionBotonPresionado(e);
+});
+
+btn_B3.addEventListener("click", (e) => {
+  reproducirNota(notas["B3"]);
+  funcionBotonPresionado(e);
+});
+
+btn_E4.addEventListener("click", (e) => {
+  reproducirNota(notas["E4"]);
+  funcionBotonPresionado(e);
+});
+
+
+let Hz_recibido = document.createElement("label")
+Hz_recibido.classList.add("label")
+Hz_recibido.innerHTML = "Hz Recibido"
+document.body.appendChild(Hz_recibido);
 
 //FUNCIONES
 function reproducirNota(Hz) {
@@ -93,14 +130,24 @@ function reproducirNota(Hz) {
   osc.start(time);
   osc.stop(time + 4); // este numero es el que define la duracion de la nota, tenerlo prenset para el control de volumen ene el envolvente
 
-  etiqueta_Hz.innerHTML = Hz + " Hz";
+ for (let i in notas) {
+  if (notas[i] === Hz){
+      etiqueta_Hz.innerHTML = `${i} → ${Hz} Hz`;
+      return
+    } 
+  }
 }
 
+function funcionBotonPresionado (event) {
 
+let botones = document.querySelectorAll("button");
+botones.forEach(element => {
+  element.classList.remove("activado");
+});
+ 
+let boton = event.target;
+ boton.classList.add("activado");
 
-
-
-
-
+}
 
 
