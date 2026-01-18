@@ -88,73 +88,68 @@ clavijero_2.appendChild(btn_E4);
 btn_E4.textContent = "E4";
 
 // CONTROLES
-const btn_Iniciar = document.createElement("button")
-btn_Iniciar.style.border = "3px solid rgb(255, 0, 70)"
-btn_Iniciar.classList.add("button")
-controles.appendChild(btn_Iniciar)
-btn_Iniciar.textContent = "Iniciar"
 
-const btn_Detener = document.createElement("button")
-btn_Detener.style.border = "3px solid rgb(80, 0, 255)"
-btn_Detener.classList.add("button")
-btn_Detener.classList.add("detenerActivo")
-controles.appendChild(btn_Detener)
-btn_Detener.textContent = "Detener"
-
-//ETIQUETAS
 let Hz_base = document.createElement("label")
 Hz_base.classList.add("label")
 Hz_base.innerHTML = "- - -"
-document.body.appendChild(Hz_base);
+controles.appendChild(Hz_base);
 
 let Hz_recibido = document.createElement("label")
 Hz_recibido.classList.add("label")
 Hz_recibido.innerHTML = "- - -"
-document.body.appendChild(Hz_recibido);
+controles.appendChild(Hz_recibido);
+
+const btn_Detener = document.createElement("button")
+btn_Detener.style.border = "3px solid rgb(80, 0, 255)";
+btn_Detener.textContent = "Detener";
+btn_Detener.classList.add("button");
+btn_Detener.classList.add("detenerActivo");
+controles.appendChild(btn_Detener);
+
 
 //EVENTOS
 btn_E2.addEventListener("click", (e) => {
   reproducirNota(notas["E2"]);
   funcionBotonPresionado(e);
+  funcionIniciarMicrofono();
 });
 
 btn_A2.addEventListener("click", (e) => {
   reproducirNota(notas["A2"]);
   funcionBotonPresionado(e);
+  funcionIniciarMicrofono();
 });
 
 btn_D3.addEventListener("click", (e) => {
   reproducirNota(notas["D3"]);
   funcionBotonPresionado(e);
+  funcionIniciarMicrofono();
 });
 
 btn_G3.addEventListener("click", (e) => {
   reproducirNota(notas["G3"]);
   funcionBotonPresionado(e);
+  funcionIniciarMicrofono();
 });
 
 btn_B3.addEventListener("click", (e) => {
   reproducirNota(notas["B3"]);
   funcionBotonPresionado(e);
+  funcionIniciarMicrofono();
 });
 
 btn_E4.addEventListener("click", (e) => {
   reproducirNota(notas["E4"]);
   funcionBotonPresionado(e);
+  funcionIniciarMicrofono();
 });
 
-btn_Iniciar.addEventListener("click", (e) => {
-  funcionIniciarMicrofono();
-  btn_Detener.classList.remove("detenerActivo");
-  btn_Iniciar.classList.add("grabandoActivo");
-});
 
 btn_Detener.addEventListener("click", (e) => {
   funcionDetenerMicrofono();
   funcionLimpiarInterfaz();
   btn_Iniciar.classList.remove("grabandoActivo")
-  btn_Detener.classList.add("detenerActivo")
-  
+  btn_Detener.classList.add("detenerActivo")  
 });
 
 
@@ -209,6 +204,9 @@ let boton = event.target;
 }
 
 async function funcionIniciarMicrofono() {
+  
+  btn_Detener.classList.remove("detenerActivo");
+  
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -227,6 +225,8 @@ async function funcionIniciarMicrofono() {
 
 function funcionDetenerMicrofono() {
   if (!micStream) return;
+
+  btn_Detener.classList.add("detenerActivo");
 
   // 1. Cortar el loop PRIMERO
   escuchando = false;

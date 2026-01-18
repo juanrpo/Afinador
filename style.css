@@ -54,15 +54,20 @@ body {
     margin-bottom: 30px;
 
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
 
     justify-content: space-evenly;
 
     width: 80%;
     height: auto;
 
-    gap: 10px;           
+    gap: 30px;           
     padding: 10px;
+
+    margin-left: 10px;
+    margin-right: 10px;
+
+    box-sizing: border-box;
 
 }
 
@@ -81,11 +86,8 @@ body {
 }
 
 .notaActivo {
-    background-color: rgb(200, 200, 200);
-}
-
-.grabandoActivo {
-    background-color:rgb(150, 150, 150);
+    background-color: rgb(150, 150, 150);
+    border: 3px red solid;;
 }
 
 .detenerActivo {
@@ -98,4 +100,5 @@ body {
     font-weight: bold;
     font-style: italic;
     color: white;
+    align-self: center;
 }
