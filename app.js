@@ -2,7 +2,20 @@
 // AFINADOR
 // ==================================================
 
-//CLAVIJERO
+// ---- VARIABLES GOBLAES ----//
+
+//ADUIO CONTEXT
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+//CAPTURA DE UDIO
+let analyser = null;
+let micStream = null;
+let buffer = null;
+
+//ANALISIS DE AUDIO
+let escuchando = false;
+
+//NOTAS BASE
 let notas = {
   "E2":82.41,
   "A2":110.00,
@@ -12,6 +25,9 @@ let notas = {
   "E4":329.63
 }
 
+// ----- INTERFAZ -----//
+
+//CLAVIJERO
 const guitarra = document.createElement("div")
 guitarra.classList.add("guitarra");
 document.body.appendChild(guitarra);
@@ -24,8 +40,7 @@ const clavijero_2 = document.createElement("div");
 clavijero_2.classList.add("clavijero")
 guitarra.appendChild(clavijero_2);
 
-
-// CUERDAS
+//CUERDAS
 const btn_E2 = document.createElement("button");
 btn_E2.classList.add("button")
 clavijero_1.appendChild(btn_E2);
@@ -56,13 +71,32 @@ btn_E4.classList.add("button")
 clavijero_2.appendChild(btn_E4);
 btn_E4.textContent = "E4";
 
+// CONTROLES
+const btn_Iniciar = document.createElement("button")
+btn_Iniciar.style.border = "3px solid rgb(255, 0, 70)"
+btn_Iniciar.classList.add("button")
+clavijero_1.appendChild(btn_Iniciar)
+btn_Iniciar.textContent = "Iniciar"
 
-//DATOS
+const btn_Detener = document.createElement("button")
+btn_Detener.style.border = "3px solid rgb(80, 0, 255)"
+btn_Detener.classList.add("button")
+btn_Detener.classList.add("detenerActivo")
+clavijero_2.appendChild(btn_Detener)
+btn_Detener.textContent = "Detener"
+
+//ETIQUETAS
 let etiqueta_Hz = document.createElement("label")
 etiqueta_Hz.classList.add("label")
-etiqueta_Hz.innerHTML = "Hz Objetivo"
+etiqueta_Hz.innerHTML = "- - -"
 document.body.appendChild(etiqueta_Hz);
 
+let Hz_recibido = document.createElement("label")
+Hz_recibido.classList.add("label")
+Hz_recibido.innerHTML = "- - -"
+document.body.appendChild(Hz_recibido);
+
+//EVENTOS
 btn_E2.addEventListener("click", (e) => {
   reproducirNota(notas["E2"]);
   funcionBotonPresionado(e);
@@ -93,15 +127,24 @@ btn_E4.addEventListener("click", (e) => {
   funcionBotonPresionado(e);
 });
 
+btn_Iniciar.addEventListener("click", (e) => {
+  funcionIniciarMicrofono();
+  btn_Detener.classList.remove("detenerActivo");
+  btn_Iniciar.classList.add("grabandoActivo");
+});
 
-let Hz_recibido = document.createElement("label")
-Hz_recibido.classList.add("label")
-Hz_recibido.innerHTML = "Hz Recibido"
-document.body.appendChild(Hz_recibido);
+btn_Detener.addEventListener("click", (e) => {
+  funcionDetenerMicrofono();
+  funcionLimpiarInterfaz();
+  btn_Iniciar.classList.remove("grabandoActivo")
+  btn_Detener.classList.add("detenerActivo")
+  
+});
 
-//FUNCIONES
+
+//---- FUNCIONES ----//
+
 function reproducirNota(Hz) {
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   const filter = audioCtx.createBiquadFilter();
@@ -132,22 +175,137 @@ function reproducirNota(Hz) {
 
  for (let i in notas) {
   if (notas[i] === Hz){
-      etiqueta_Hz.innerHTML = `${i} → ${Hz} Hz`;
+      etiqueta_Hz.innerHTML = Hz + "Hz"
       return
     } 
   }
 }
 
 function funcionBotonPresionado (event) {
-
-let botones = document.querySelectorAll("button");
-botones.forEach(element => {
-  element.classList.remove("activado");
+  let botones = document.querySelectorAll("button");
+  botones.forEach(element => {
+    element.classList.remove("activado");
 });
  
 let boton = event.target;
  boton.classList.add("activado");
 
+}
+
+async function funcionIniciarMicrofono() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    micStream = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    buffer = new Float32Array(analyser.fftSize);
+    micStream.connect(analyser);
+  } catch (err) {
+    console.error(err);
+  }
+
+  escuchando = true;
+  funcionDetectarFrecuencia();
+}
+
+function funcionDetenerMicrofono() {
+  if (!micStream) return;
+
+  // 1. Cortar el loop PRIMERO
+  escuchando = false;
+
+  // 2. Detener tracks reales del micrófono
+  micStream.mediaStream.getTracks().forEach(track => track.stop());
+
+  // 3. Desconectar audio
+  micStream.disconnect();
+  micStream = null;
+  analyser = null;
+  buffer = null;
+}
+
+function funcionLimpiarInterfaz(){
+  etiqueta_Hz.textContent = "- - -";
+  Hz_recibido.textContent = "- - -";
+
+  document.querySelectorAll(".button").forEach(btn => {
+    btn.classList.remove("activado");
+  });
+}
+
+function funcionAutoCorrelacion(buffer, sampleRate) {
+  const size = buffer.length;
+  let rms = 0;
+
+  // Calcular RMS (nivel de señal)
+  for (let i = 0; i < size; i++) {
+    rms += buffer[i] * buffer[i];
+  }
+  rms = Math.sqrt(rms / size);
+
+  // Señal muy débil → no hay nota
+  if (rms < 0.01) return null;
+
+  let r1 = 0, r2 = size - 1, threshold = 0.2;
+
+  // Recortar silencio inicial y final
+  for (let i = 0; i < size / 2; i++) {
+    if (Math.abs(buffer[i]) < threshold) {
+      r1 = i;
+      break;
+    }
+  }
+
+  for (let i = 1; i < size / 2; i++) {
+    if (Math.abs(buffer[size - i]) < threshold) {
+      r2 = size - i;
+      break;
+    }
+  }
+
+  buffer = buffer.slice(r1, r2);
+  const newSize = buffer.length;
+
+  let c = new Array(newSize).fill(0);
+
+  // Autocorrelación
+  for (let i = 0; i < newSize; i++) {
+    for (let j = 0; j < newSize - i; j++) {
+      c[i] += buffer[j] * buffer[j + i];
+    }
+  }
+
+  let d = 0;
+  while (c[d] > c[d + 1]) d++;
+
+  let maxVal = -1, maxPos = -1;
+  for (let i = d; i < newSize; i++) {
+    if (c[i] > maxVal) {
+      maxVal = c[i];
+      maxPos = i;
+    }
+  }
+
+  if (maxPos === -1) return null;
+
+  return sampleRate / maxPos;
+}
+
+function funcionDetectarFrecuencia() {
+  if (!escuchando || !analyser) return;
+  
+  analyser.getFloatTimeDomainData(buffer);
+  const frecuencia = funcionAutoCorrelacion(buffer, audioCtx.sampleRate);
+
+  if (frecuencia && isFinite(frecuencia)) {
+    Hz_recibido.innerHTML = `${frecuencia.toFixed(2)} Hz`;
+  } else {
+    // Se activa si no hay señal
+    Hz_recibido.textContent = "- - -";
+  }
+
+  requestAnimationFrame(funcionDetectarFrecuencia);
 }
 
 
