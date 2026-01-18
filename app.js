@@ -15,7 +15,8 @@ let buffer = null;
 //ANALISIS DE AUDIO
 let escuchando = false;
 
-//NOTAS BASE
+//NOTAS BASE TABLA ESTANDAR
+/*
 let notas = {
   "E2":82.41,
   "A2":110.00,
@@ -23,6 +24,17 @@ let notas = {
   "G3":196.00,
   "B3":246.94,
   "E4":329.63
+}
+*/
+
+//NOTAS AFINACION CON PIANO
+let notas = {
+  "E2":82.41,
+  "A2":110.00,
+  "D3":146.83,
+  "G3":196.00,
+  "B3":246.94,
+  "E4":331.00
 }
 
 // ----- INTERFAZ -----//
@@ -39,6 +51,10 @@ guitarra.appendChild(clavijero_1);
 const clavijero_2 = document.createElement("div");
 clavijero_2.classList.add("clavijero")
 guitarra.appendChild(clavijero_2);
+
+const controles = document.createElement("div")
+controles.classList.add("controles");
+document.body.appendChild(controles);
 
 //CUERDAS
 const btn_E2 = document.createElement("button");
@@ -75,21 +91,21 @@ btn_E4.textContent = "E4";
 const btn_Iniciar = document.createElement("button")
 btn_Iniciar.style.border = "3px solid rgb(255, 0, 70)"
 btn_Iniciar.classList.add("button")
-clavijero_1.appendChild(btn_Iniciar)
+controles.appendChild(btn_Iniciar)
 btn_Iniciar.textContent = "Iniciar"
 
 const btn_Detener = document.createElement("button")
 btn_Detener.style.border = "3px solid rgb(80, 0, 255)"
 btn_Detener.classList.add("button")
 btn_Detener.classList.add("detenerActivo")
-clavijero_2.appendChild(btn_Detener)
+controles.appendChild(btn_Detener)
 btn_Detener.textContent = "Detener"
 
 //ETIQUETAS
-let etiqueta_Hz = document.createElement("label")
-etiqueta_Hz.classList.add("label")
-etiqueta_Hz.innerHTML = "- - -"
-document.body.appendChild(etiqueta_Hz);
+let Hz_base = document.createElement("label")
+Hz_base.classList.add("label")
+Hz_base.innerHTML = "- - -"
+document.body.appendChild(Hz_base);
 
 let Hz_recibido = document.createElement("label")
 Hz_recibido.classList.add("label")
@@ -175,7 +191,7 @@ function reproducirNota(Hz) {
 
  for (let i in notas) {
   if (notas[i] === Hz){
-      etiqueta_Hz.innerHTML = Hz + "Hz"
+      Hz_base.innerHTML = Hz + "Hz"
       return
     } 
   }
@@ -184,11 +200,11 @@ function reproducirNota(Hz) {
 function funcionBotonPresionado (event) {
   let botones = document.querySelectorAll("button");
   botones.forEach(element => {
-    element.classList.remove("activado");
+    element.classList.remove("notaActivo");
 });
  
 let boton = event.target;
- boton.classList.add("activado");
+ boton.classList.add("notaActivo");
 
 }
 
@@ -226,11 +242,11 @@ function funcionDetenerMicrofono() {
 }
 
 function funcionLimpiarInterfaz(){
-  etiqueta_Hz.textContent = "- - -";
+  Hz_base.textContent = "- - -";
   Hz_recibido.textContent = "- - -";
 
   document.querySelectorAll(".button").forEach(btn => {
-    btn.classList.remove("activado");
+    btn.classList.remove("notaActivo");
   });
 }
 
